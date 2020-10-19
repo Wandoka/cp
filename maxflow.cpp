@@ -106,16 +106,13 @@ template<typename T> inline T getint() {
 template<typename T> T getint() {
 	T val = 0;
 	char c;
-
 	bool neg = false;
 	while ((c = getchar()) && !(c >= '0' && c <= '9')) {
 		neg |= c == '-';
 	}
-
 	do {
 		val = (val * 10) + c - '0';
 	} while ((c = getchar()) && (c >= '0' && c <= '9'));
-
 	return val * (neg ? -1 : 1);
 }
 */
@@ -157,27 +154,29 @@ struct cords {
 	//}
 //};;
 
-struct MaxFlow {
+template<typename INT, const INT MAXIMUM_CAPACITY> struct MaxFlow {
 	int s;//source
 	int w; //node after sourse that connects every1
 	int t;//sink
-
 	int nodes;
+
 	struct Edge {
-		int from, to, flow, cap;
-		Edge(int from, int to, int flow, int cap) : from(from), to(to), flow(flow), cap(cap) {};
+		int from, to;
+		INT flow, cap;
+		Edge(int from, int to, INT flow, INT cap) : from(from), to(to), flow(flow), cap(cap) {};
 	};
 
-	int ans;
+	ll ans;
+	bool UNDIRECTED = 0;
 
 	vector<Edge> E;
 	vector<int> Level;
 	vector<vector<int>> adj;
 	vector<int> num;
 	vector<int> Reachable;
-
 	vector<int> Cut;
-	void addedge(int from, int to, int cap) {
+
+	void __addedge(int from, int to, INT cap) {
 		Edge e_normal(from, to, 0, cap);
 		E.push_back(e_normal);
 		adj[from].push_back(E.size() - 1);
@@ -186,6 +185,7 @@ struct MaxFlow {
 		E.push_back(e_backwards);
 		adj[to].push_back(E.size() - 1);
 	}
+
 
 	bool BuildLevels() {
 		Level.assign(nodes, -1);
@@ -196,7 +196,7 @@ struct MaxFlow {
 			int node = q.front();
 			q.pop();
 			for (auto i : adj[node]) {
-				int& from = E[i].from; int& to = E[i].to; int& flow = E[i].flow; int& cap = E[i].cap;
+				int& from = E[i].from; int& to = E[i].to; INT& flow = E[i].flow; INT& cap = E[i].cap;
 				if (Level[to] == -1 && flow < cap) {
 					q.push(to);
 					Level[to] = Level[from] + 1;
@@ -207,16 +207,16 @@ struct MaxFlow {
 		return true;
 	}
 
-	int dfs(int node, int f) {
+	INT dfs(int node, INT f) {
 		if (!f) return 0;
 		if (node == t) return f;
 		for (num[node]; num[node] < adj[node].size(); ++num[node]) {
 			int i = adj[node][num[node]];
-			int& from = E[i].from; int& to = E[i].to; int& flow = E[i].flow; int& cap = E[i].cap;
+			int& from = E[i].from; int& to = E[i].to; INT& flow = E[i].flow; INT& cap = E[i].cap;
 			if (Level[from] + 1 != Level[to]) continue;
 
-			int pushing = min(f, max(0ll, (cap - flow)));
-			int pushed = dfs(to, pushing);
+			INT pushing = min(f, max((INT)0, (cap - flow)));
+			INT pushed = dfs(to, pushing);
 			if (pushed != 0) {
 				E[i].flow += pushed;
 				E[i ^ 1].flow -= pushed;
@@ -226,16 +226,11 @@ struct MaxFlow {
 		return 0;
 	}
 
-	//<-------------------->
-	// FLOW STARTING VALUES
-	//<-------------------->
-
-
 	void FindReachable(int node) {
 		Reachable[node] = 1;
 		for (auto i : adj[node]) {
 			if (i % 2 == 1) continue;
-			int& from = E[i].from; int& to = E[i].to; int& flow = E[i].flow; int& cap = E[i].cap;
+			int& from = E[i].from; int& to = E[i].to; INT& flow = E[i].flow; INT& cap = E[i].cap;
 			if (cap - flow == 0) continue;
 			if (Reachable[to] == 0) FindReachable(to);
 		}
@@ -243,10 +238,16 @@ struct MaxFlow {
 	void FindCut() {
 		FindReachable(s);
 		for (int i = 0; i < E.size(); i += 2) {
-			int& from = E[i].from; int& to = E[i].to; int& flow = E[i].flow; int& cap = E[i].cap;
+			int& from = E[i].from; int& to = E[i].to; INT& flow = E[i].flow; INT& cap = E[i].cap;
+			if (s == from || s == to || w == from || w == to || t == from || t == to) continue;
 			if (Reachable[from] && !Reachable[to]) {
-				if (i % 4 == 2) {
-					Cut.push_back(i - 2);
+				if (UNDIRECTED == true) {
+					if (i % 4 == 0) {
+						Cut.push_back(i - 2);
+					}
+					else {
+						Cut.push_back(i);
+					}
 				}
 				else {
 					Cut.push_back(i);
@@ -254,43 +255,21 @@ struct MaxFlow {
 			}
 		}
 	}
-	MaxFlow(int n, vector<int> From, vector<int> To, vector<int> Cap) {
-		int m = From.size();
 
-		s = n;
-		w = n + 1;
-		t = n + 2;
+	MaxFlow(int n) {
+		s = n; w = n + 1; t = n + 2;
 		nodes = n + 3;
 		Reachable.assign(nodes, 0);
 		vector<int> temp;
 		adj.assign(nodes, temp);
+		__addedge(s, w, MAXIMUM_CAPACITY);
+	}
 
-		fori(m)
-			addedge(From[i], To[i], Cap[i]);
-
-		const int INITIAL_CAPACITY = inf;
-		const int CAPACITY = inf;
-
-		addedge(s, w, INITIAL_CAPACITY);
-
-
-		//make connections w -> node
-		addedge(w, 0, CAPACITY);
-		fori(n) {
-			//addedge(w, i, CAPACITY);
-		}
-
-
-		//make connections node -> t
-		addedge(n - 1, t, CAPACITY);
-		fori(n) {
-			//addedge(i, t, CAPACITY);
-		}
-
+	void go() {
 		ans = 0;
 		while (BuildLevels()) {
 			num.assign(nodes, 0);
-			while (int f = dfs(s, inf)) {
+			while (INT f = dfs(s, inf)) {
 				ans += f;
 			}
 		}
@@ -298,6 +277,17 @@ struct MaxFlow {
 		FindCut();
 	}
 
+	void wantedge(int from, int to, INT cap) {
+		__addedge(from, to, cap);
+		if (UNDIRECTED) __addedge(to, from, cap);
+	}
+
+	void fromsource(int v, INT cap = MAXIMUM_CAPACITY) {
+		__addedge(w, v, cap);
+	}
+	void tosink(int v, INT cap = MAXIMUM_CAPACITY) {
+		__addedge(v, t, cap);
+	}
 
 
 };
@@ -307,32 +297,27 @@ int32_t main() {
 	//freopen("flow.in", "r", stdin);
 	//freopen("flow.out", "w", stdout);
 	int n, m; cin >> n >> m;
-	vector<int> From(0);
-	vector<int> To(0);
-	vector<int> Cap(0);
-	From.reserve(m);
-	To.reserve(m);
-	Cap.reserve(m);
+
+	const ll mc = 1e18;
+	MaxFlow<ll, mc> f(n);
+	f.UNDIRECTED = true;
 
 	fori(m) {
-		int a, b, c; cin >> a >> b >> c;
+		int a, b, c; cin >> a >> b;
 		a--;
 		b--;
-
-		From.push_back(a);
-		From.push_back(b);
-		To.push_back(b);
-		To.push_back(a);
-		Cap.push_back(c);
-		Cap.push_back(c);
+		c = 1;
+		f.wantedge(a, b, c);
 	}
+	f.fromsource(0);
+	f.tosink(n - 1);
 
-	MaxFlow f(n, From, To, Cap);
+	f.go();
 
-	cout << f.ans << endl;
+	cerr << f.ans << endl;
 	cout << f.Cut.size() << endl;
 	for (auto e : f.Cut) {
-		cout << f.E[e].from + 1 << " " << f.E[e].to + 1 << endl; 
+		cout << f.E[e].from + 1 << " " << f.E[e].to + 1 << endl;
 	}
 	return 0;
 }
