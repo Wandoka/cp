@@ -27,7 +27,7 @@ inline void boostIO() {
 	ios_base::sync_with_stdio(0);
 	cin.tie(0);
 	cout.tie(0);
-	cout << fixed << setprecision(10);
+	cout << fixed << setprecision(15);
 }
 
 bool isPrime(int x) {
@@ -95,7 +95,7 @@ int Mod = 1e9 + 7;
 //<--------------------------------------------------------->
 //<--------------------------------------------------------->
 //GEOMETRY
-long double eps = 1e-8;
+long double eps = 1e-9;
 
 bool equal(ld a, ld b) {
 	return abs(a - b) < eps;
@@ -128,6 +128,7 @@ struct point {
 		angle = atan2(y, x);
 		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
 	};
+	point(line l);
 };
 
 ostream& operator<<(ostream& output, const point& p) {
@@ -158,6 +159,7 @@ struct jump { //really it is a vector lol
 		len = sqrt(X * X + Y * Y);
 	};
 	jump(isnormal n);
+	jump(line l);
 
 };
 
@@ -287,9 +289,25 @@ struct segment {
 	}
 };
 
-isnormal::isnormal(line l) {
-	X = l.a;
-	Y = l.b;
+
+point::point(line l) {
+	if (equal(l.b, 0)) {
+		x = -l.c / l.a;
+		y = -10;
+	}
+	else if (equal(l.a, 0)) {
+		x = -10;
+		y = -l.c / l.b;
+	}
+	else {
+		x = 10;
+		y = (-10 * l.a - l.c) / l.b;
+	}
+}
+
+jump::jump(line l) {
+	X = -l.b;
+	Y = l.a;
 	angle = atan2(Y, X);
 	if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
 	len = sqrt(X * X + Y * Y);
@@ -301,16 +319,28 @@ jump::jump(isnormal n) {
 	len = n.len;
 }
 
+isnormal::isnormal(line l) {
+	X = l.a;
+	Y = l.b;
+	angle = atan2(Y, X);
+	if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+	len = sqrt(X * X + Y * Y);
+}
+
 jump normalize(jump j);
 line::line(line l, point p) {
-	isnormal n(l);
-	jump j = n;
-	j = normalize(j);
-
-
+	jump j(l);
+	l = line(p, j);
+	a = l.a;
+	b = l.b;
+	c = l.c;
 }
 line::line(point p, line l) {
-
+	jump j(l);
+	l = line(p, j);
+	a = l.a;
+	b = l.b;
+	c = l.c;
 }
 
 struct CONFLUX {
@@ -480,15 +510,15 @@ ld sc(jump a, jump b) {
 jump rotate_counter_clockwise(jump j, ld angle) {
 	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
 }
-jump rotate_counter_clockwise(ld angle, jump j) { 
+jump rotate_counter_clockwise(ld angle, jump j) {
 	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
 }
 
-jump rotate_clockwise(jump j, ld angle) { 
+jump rotate_clockwise(jump j, ld angle) {
 	angle = -angle;
 	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
 }
-jump rotate_clockwise(ld angle, jump j) { 
+jump rotate_clockwise(ld angle, jump j) {
 	angle = -angle;
 	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
 }
@@ -670,18 +700,16 @@ bool intersect(segment a, segment b) {
 	return ans;
 }
 
-/*
-point project(point p, line l) {
+
+void project(point p, line l) {
 	line l2(-l.b, l.a, l.b * p.x - l.a * p.y);
-	conflux c = intersect(l, l2);
-	return c.p[0];
+	intersect(l, l2);
 }
-point project(line l, point p) {
+void project(line l, point p) {
 	line l2(-l.b, l.a, l.b * p.x - l.a * p.y);
-	conflux c = intersect(l, l2);
-	return c.p[0];
+	intersect(l, l2);
 }
-*/
+
 
 ld distance(point p1, point p2) {
 	if (intersect(p1, p2) == 1) return 0;
@@ -735,26 +763,40 @@ ld distance(segment s, point p) {
 	else return min(distance(p, s.p1), distance(p, s.p2));
 }
 ld distance(segment s1, segment s2) {
-	if(intersect(s1, s2)) return 0;
+	if (intersect(s1, s2)) return 0;
 	return min({ distance(s1.p1, s2), distance(s1.p2, s2), distance(s2.p1, s1), distance(s2.p2, s1) });
 }
+
+int side(point p, line l) {
+	if (intersect(p, l)) return 0;
+	ld v = l.a * p.x + l.b * p.y + l.c;
+	if (v < 0) return 1;
+	else return 2;
+}
+int side(line l, point p) {
+	if (intersect(p, l)) return 0;
+	ld v = l.a * p.x + l.b * p.y + l.c;
+	if (v < 0) return 1;
+	else return 2;
+}
+//<--------------------------------------------------------->
+//<--------------------------------------------------------->
+//<--------------------------------------------------------->
+
 
 
 int32_t main() {
 	boostIO();
-	//freopen("line2.in", "r", stdin);
-	//freopen("line2.out", "w", stdout);
-	//input_point(1);
-	//input_segment(1);
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
 
-
-
-	/*
-	input_point(1);
-	input_jump(1);
-	add_line(1, line(Point[1], isnormal(Jump[1])));
-	cout << Line[1].a << " " << Line[1].b << " " << Line[1].c << " " << endl;
-	*/
-	//cout << G.area(A) << endl;
+	input_segment(1);
+	input_segment(2);
+	if (intersect(Segment[1], Segment[2])) {
+		cout << "Yes" << endl;
+	}
+	else {
+		cout << "No" << endl;
+	}
 	//Return;
 }
