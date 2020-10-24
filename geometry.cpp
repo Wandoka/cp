@@ -36,6 +36,7 @@ bool isPrime(int x) {
 }
 
 typedef long long int ll;
+typedef long double ld;
 typedef unsigned long long ull;
 
 typedef vector<int> vi;
@@ -90,253 +91,670 @@ int Mod = 1e9 + 7;
 
 //int inf = 3e18+5;
 
-long double eps = 1e-7;
+//<--------------------------------------------------------->
+//<--------------------------------------------------------->
+//<--------------------------------------------------------->
+//GEOMETRY
+long double eps = 1e-8;
 
-struct ld {
-	ld() {};
-	long double v;
-	operator long double() { return v; }
-	operator long double() const { return v; }
-	bool operator == (ld a) {
-		if (fabs(a.v - v) < eps) return true;
-		else return false;
-	}
-	ld(long double x) : v(x) {};
-	ld& operator = (long double a) {
-		v = move(a);
-		return *this;
-	}
-	ld& operator = (int a) {
-		v = move(a);
-		return *this;
-	}
-	ld& operator = (long long a) {
-		v = move(a);
-		return *this;
-	}
-	ld& operator += (long double a) {
-		v = a + v;
-		return *this;
-	}
-	ld& operator *= (long double a) {
-		v = a * v;
-		return *this;
-	}
+bool equal(ld a, ld b) {
+	return abs(a - b) < eps;
+}
+bool LESS(ld a, ld b) {
+	return a < b - eps;
+}
+bool lessorequal(ld a, ld b) {
+	return a <= b + eps;
+}
+#define less LESS
+
+
+#define pi 3.14159265358979323846
+
+#define isnormal NORMAL
+
+struct point;
+struct jump;
+struct isnormal;
+struct line;
+struct ray;
+struct segment;
+
+struct point {
+	point() {};
+	ld x, y;
+	ld angle;
+	point(ld x, ld y) : x(x), y(y) {
+		angle = atan2(y, x);
+		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+	};
 };
 
-ostream& operator<<(ostream& output, const ld& a) {
-	output << a.v;
+ostream& operator<<(ostream& output, const point& p) {
+	output << p.x << " " << p.y;
 	return output;
 }
 
-istream& operator>>(istream& input, ld& a) {
-	input >> a.v;
+istream& operator>>(istream& input, point& p) {
+	input >> p.x >> p.y;
 	return input;
 }
 
-struct Geometry {
-#define pi 3.14159265358979323846
-	struct point {
-		point() {};
-		ld x, y;
-		ld angle;
-		ld radiusSQ;
-		point(ld x, ld y) : x(x), y(y) {
-			angle = atan2(y, x);
-			if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
-			radiusSQ = x * x + y * y;
-		};
+struct jump { //really it is a vector lol
+	jump() {};
+	ld X, Y;
+	ld angle;
+	ld len;
+	jump(point p1, point p2) {
+		X = p2.x - p1.x;
+		Y = p2.y - p1.y;
+		angle = atan2(Y, X);
+		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+		len = sqrt(X * X + Y * Y);
+	}
+	jump(ld X, ld Y) : X(X), Y(Y) {
+		angle = atan2(Y, X);
+		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+		len = sqrt(X * X + Y * Y);
 	};
-	struct jump { //really it is a vector lol
-		jump() {};
-		ld X, Y;
-		ld angle;
-		ld lenSQ;
-		jump(point p1, point p2) {
-			X = p2.x - p1.x;
-			Y = p2.y - p1.y;
-			angle = atan2(Y, X);
-			if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
-			lenSQ = X * X + Y * Y;
-		}
-		jump(ld X, ld Y) : X(X), Y(Y) {
-			angle = atan2(Y, X);
-			if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
-			lenSQ = X * X + Y * Y;
-		};
+	jump(isnormal n);
+
+};
+
+point operator + (point p, jump j) {
+	return point(p.x + j.X, p.y + j.Y);
+}
+point operator + (jump j, point p) {
+	return point(p.x + j.X, p.y + j.Y);
+}
+point operator + (point p1, point p2) {
+	return point(p1.x + p2.x, p1.y + p2.y);
+}
+jump operator + (jump j1, jump j2) {
+	return jump(j1.X + j2.X, j1.Y + j2.Y);
+}
+jump operator * (jump j, ld v) {
+	return jump(j.X * v, j.Y * v);
+}
+jump operator * (ld v, jump j) {
+	return jump(j.X * v, j.Y * v);
+}
+
+struct isnormal { //really it is a vector too lol
+	isnormal() {};
+	ld X, Y;
+	ld angle;
+	ld len;
+	isnormal(point p1, point p2) {
+		X = p2.x - p1.x;
+		Y = p2.y - p1.y;
+		angle = atan2(Y, X);
+		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+		len = sqrt(X * X + Y * Y);
+	}
+	isnormal(ld X, ld Y) : X(X), Y(Y) {
+		angle = atan2(Y, X);
+		if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+		len = sqrt(X * X + Y * Y);
 	};
+	isnormal(jump j) {
+		X = j.X;
+		Y = j.Y;
+		angle = j.angle;
+		len = j.len;
+	}
+	isnormal(line l);
 
-	struct line {
-		line() {};
-		ld a, b, c;
-		line(point p1, point p2) {
-			a = (p1.y - p2.y);
-			b = (p2.x - p1.x);
-			c = (p1.x * p2.y - p2.x * p1.y);
-		}
-		line(ld a, ld b, ld c) : a(a), b(b), c(c) {}
-	};
+};
 
-	struct ray {
-		ray() {};
-		ld x, y, X, Y, lenSQ, a, b, c, angle;
-		ray(point p1, point p2) {
-			x = p1.x;
-			y = p1.y;
-			X = p2.x - p1.x;
-			Y = p2.y - p1.y;
-			lenSQ = X * X + Y * Y;
-			a = (p1.y - p2.y);
-			b = (p2.x - p1.x);
-			c = (p1.x * p2.y - p2.x * p1.y);
-			angle = atan2(Y, X);
-			if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
-		}
+struct line {
+	line() {};
+	ld a, b, c;
+	line(point p1, point p2) {
+		a = (p1.y - p2.y);
+		b = (p2.x - p1.x);
+		c = (p1.x * p2.y - p2.x * p1.y);
+	}
+	line(point p1, jump j) {
+		point p2(p1 + j);
+		a = (p1.y - p2.y);
+		b = (p2.x - p1.x);
+		c = (p1.x * p2.y - p2.x * p1.y);
+	}
+	line(jump j, point p1) {
+		point p2(p1 + j);
+		a = (p1.y - p2.y);
+		b = (p2.x - p1.x);
+		c = (p1.x * p2.y - p2.x * p1.y);
+	}
+	line(isnormal n, point p) {
+		a = n.X;
+		b = n.Y;
+		c = -p.x * n.X - p.y * n.Y;
+	}
+	line(point p, isnormal n) {
+		a = n.X;
+		b = n.Y;
+		c = -p.x * n.X - p.y * n.Y;
+	}
+	line(line l, point p);
+	line(point p, line l);
+	line(ld a, ld b, ld c) : a(a), b(b), c(c) {}
+};
 
-		ray(point p1, jump j) {
-			point p2(p1.x + j.X, p1.y + j.Y);
-			x = p1.x;
-			y = p1.y;
-			X = p2.x - p1.x;
-			Y = p2.y - p1.y;
-			lenSQ = X * X + Y * Y;
-			a = (p1.y - p2.y);
-			b = (p2.x - p1.x);
-			c = (p1.x * p2.y - p2.x * p1.y);
-			angle = atan2(Y, X);
-			if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
-		}
-	};
 
-	struct segment {
-		segment() {};
-		ld x1, y1, x2, y2, a, b, c;
-		segment(point p1, point p2) {
-			x1 = p1.x;
-			y1 = p1.y;
-			x2 = p2.x;
-			y2 = p2.y;
-			a = (p1.y - p2.y);
-			b = (p2.x - p1.x);
-			c = (p1.x * p2.y - p2.x * p1.y);
-		}
-	};
-
-	
-	jump normalize(jump a) {
-		jump b(a.X / sqrt(a.lenSQ), a.Y / sqrt(a.lenSQ));
-		return b;
+struct ray {
+	ray() {};
+	ld x, y, a, b, c;
+	point p;
+	jump j;
+	line l;
+	ray(point p1, point p2) {
+		p = p1;
+		j = jump(p1, p2);
+		l = line(p1, p2);
 	}
-	ld vc(jump a, jump b) {
-		return a.X * b.Y - a.Y * b.X;
+	ray(point p1, jump j) {
+		point p2(p1.x + j.X, p1.y + j.Y);
+		p = p1;
+		j = jump(p1, p2);
+		l = line(p1, p2);
 	}
-	ld sc(jump a, jump b) {
-		return a.X * b.X + a.Y * b.Y;
-	}
-
-	vector<point> Point;
-	vector<jump> Jump;
-	vector<line> Line;
-	vector<ray> Ray;
-	vector<segment> Segment;
-	
-
-	void add_point(int g, ld x, ld y) {
-		Point[g] = point(x, y);
-	}
-	void input_point(int g) {
-		ld x, y; cin >> x >> y;
-		add_point(g, x, y);
-	}
-
-	void input_point_int(int g) {
-		int x, y; cin >> x >> y;
-		add_point(g, x, y);
-	}
-
-	ray bisector(point p, point p1, point p2) {
-		jump j1(p, p1);
-		jump j2(p, p2);
-		j1 = normalize(j1);
-		j2 = normalize(j2);
-	}
-	ray bisector(point p, jump j1, jump j2) {
-
-	}
-
-	void add_ray(int g, point p, jump j) {
-		if (g >= Ray.size()) Ray.resize(g);
-		Ray[g] = ray(p, j);
-	}
-	void add_ray(int g, ray r) {
-		if (g >= Ray.size()) Ray.resize(g);
-		Ray[g] = r;
-	}
-
-	void add_jump(int g, jump j) {
-		if (g >= Jump.size()) Jump.resize(g);
-		Jump[g] = j;
-	}
-	void add_jump(int g, point p1, point p2) {
-		if (g >= Jump.size()) Jump.resize(g);
-		Jump[g] = jump(p1, p2);
-	}
-	void add_jump(int g, int i1, int i2) {
-		if (g >= Jump.size()) Jump.resize(g);
-		Jump[g] = jump(Point[i1], Point[i2]);
-	}
-
-	void add_line(int g, line l) {
-		if (g >= Line.size()) Line.resize(g);
-		Line[g] = l;
-	}
-	void add_line(int g, ld a, ld b, ld c) {
-		if (g >= Line.size()) Line.resize(g);
-		Line[g] = line(a, b, c);
-	}
-	void add_line(int g, point p1, point p2) {
-		if (g >= Line.size()) Line.resize(g);
-		Line[g] = line(p1, p2);
-	}
-	void add_line(int g, int i1, int i2) {
-		if (g >= Line.size()) Line.resize(g);
-		Line[g] = line(Point[i1], Point[i2]);
-	}
-
-	ld angle(point a, point b) {
-		ld big, small;
-		big = max(a.angle, b.angle);
-		small = min(a.angle, b.angle);
-		return min(big - small, small + 2 * pi - big);
-	}
-
-	ld area(vector<int>& A) {
-		int n = A.size();
-		ld area = 0;
-		vector<jump> V;
-		for(int i = 1; i < n; ++i) {
-			V.push_back(jump(Point[A[0]], Point[A[i]]));
-		}
-		//auto cmp = [](const jump& a, const jump& b) { return a.angle < b.angle; };
-		//sort(all(V), cmp);
-		for (int i = 0; i < (int)V.size() - 1; ++i) {
-			area += vc(V[i], V[i+1]);
-		}
-		return fabs(area) / 2;
+	ray(jump j, point p1) {
+		point p2(p1.x + j.X, p1.y + j.Y);
+		p = p1;
+		j = jump(p1, p2);
+		l = line(p1, p2);
 	}
 };
 
+struct segment {
+	segment() {};
+	point p1;
+	point p2;
+	line l;
+	ld x1, y1, x2, y2, a, b, c;
+	segment(point p1, point p2) : p1(p1), p2(p2) {
+		l = line(p1, p2);
+	}
+	segment(point p1, jump j) : p1(p1) {
+		point p2(p1.x + j.X, p1.y + j.Y);
+		l = line(p1, p2);
+	}
+	segment(jump j, point p1) : p1(p1) {
+		point p2(p1.x + j.X, p1.y + j.Y);
+		l = line(p1, p2);
+	}
+};
+
+isnormal::isnormal(line l) {
+	X = l.a;
+	Y = l.b;
+	angle = atan2(Y, X);
+	if (angle < 0) angle = angle + 2 * pi; //[0, 2pi) without this line [-pi, pi)
+	len = sqrt(X * X + Y * Y);
+}
+jump::jump(isnormal n) {
+	X = n.X;
+	Y = n.Y;
+	angle = n.angle;
+	len = n.len;
+}
+
+jump normalize(jump j);
+line::line(line l, point p) {
+	isnormal n(l);
+	jump j = n;
+	j = normalize(j);
+
+
+}
+line::line(point p, line l) {
+
+}
+
+struct CONFLUX {
+	bool consumed = 0;
+	point p[3];
+	int size = 0;
+	CONFLUX() {};
+	CONFLUX(bool consumed) : consumed(consumed) {};
+	CONFLUX(vector<point> v) : consumed(consumed) {
+		fori(v.size()) {
+			p[i] = v[i];
+			++size;
+		}
+	};
+	CONFLUX(point p1) {
+		p[0] = p1;
+		size = 1;
+	}
+	CONFLUX(point p1, point p2) {
+		p[0] = p1;
+		p[1] = p2;
+		size = 2;
+	}
+	CONFLUX(point p1, point p2, point p3) {
+		p[0] = p1;
+		p[1] = p2;
+		p[2] = p3;
+		size = 3;
+	}
+} conflux;
+
+
+
+vector<point> Point;
+vector<jump> Jump;
+vector<line> Line;
+vector<ray> Ray;
+vector<segment> Segment;
+
+
+
+void add_segment(int g, segment s) {
+	if (g >= Segment.size()) Segment.resize(g + 1);
+	Segment[g] = s;
+}
+void add_segment(int g, point p1, point p2) {
+	if (g >= Segment.size()) Segment.resize(g + 1);
+	Segment[g] = segment(p1, p2);
+}
+void add_segment(int g, int i1, int i2) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Segment[g] = segment(Point[i1], Point[i2]);
+}
+void input_segment(int g) {
+	ld a, b, c, d; cin >> a >> b >> c >> d;
+	add_segment(g, point(a, b), point(c, d));
+}
+void input_segment_int(int g) {
+	int a, b, c, d; cin >> a >> b >> c >> d;
+	add_segment(g, point(a, b), point(c, d));
+}
+
+void add_ray(int g, point p, jump j) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Ray[g] = ray(p, j);
+}
+void add_ray(int g, jump j, point p) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Ray[g] = ray(p, j);
+}
+void add_ray(int g, ray r) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Ray[g] = r;
+}
+void add_ray(int g, point p1, point p2) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Ray[g] = ray(p1, p2);
+}
+void add_ray(int g, int i1, int i2) {
+	if (g >= Ray.size()) Ray.resize(g + 1);
+	Ray[g] = ray(Point[i1], Point[i2]);
+}
+void input_ray(int g) { //!! maybe make 2 different ones, with 2 points and point + jump
+	ld a, b, c, d; cin >> a >> b >> c >> d;
+	add_ray(g, point(a, b), jump(c, d));
+}
+void input_ray_int(int g) { //!! maybe make 2 different ones, with 2 points and point + jump
+	int a, b, c, d; cin >> a >> b >> c >> d;
+	add_ray(g, point(a, b), jump(c, d));
+}
+
+void add_line(int g, line l) {
+	if (g >= Line.size()) Line.resize(g + 1);
+	Line[g] = l;
+}
+void add_line(int g, ld a, ld b, ld c) {
+	if (g >= Line.size()) Line.resize(g + 1);
+	Line[g] = line(a, b, c);
+}
+void add_line(int g, point p1, point p2) {
+	if (g >= Line.size()) Line.resize(g + 1);
+	Line[g] = line(p1, p2);
+}
+void add_line(int g, int i1, int i2) {
+	if (g >= Line.size()) Line.resize(g + 1);
+	Line[g] = line(Point[i1], Point[i2]);
+}
+void input_line(int g) {
+	ld a, b, c; cin >> a >> b >> c;
+	add_line(g, a, b, c);
+}
+void input_line_int(int g) {
+	int a, b, c; cin >> a >> b >> c;
+	add_line(g, a, b, c);
+}
+
+void add_jump(int g, jump j) {
+	if (g >= Jump.size()) Jump.resize(g + 1);
+	Jump[g] = j;
+}
+void add_jump(int g, point p1, point p2) {
+	if (g >= Jump.size()) Jump.resize(g + 1);
+	Jump[g] = jump(p1, p2);
+}
+void add_jump(int g, int i1, int i2) {
+	if (g >= Jump.size()) Jump.resize(g + 1);
+	Jump[g] = jump(Point[i1], Point[i2]);
+}
+void add_jump(int g, ld x, ld y) {
+	if (g >= Jump.size()) Jump.resize(g + 1);
+	Jump[g] = jump(x, y);
+}
+void input_jump(int g) {
+	ld x, y; cin >> x >> y;
+	add_jump(g, x, y);
+}
+void input_jump_int(int g) {
+	int x, y; cin >> x >> y;
+	add_jump(g, (ld)x, (ld)y);
+}
+
+
+void add_point(int g, ld x, ld y) {
+	if (g >= Point.size()) Point.resize(g + 1);
+	Point[g] = point(x, y);
+}
+void input_point(int g) {
+	ld x, y; cin >> x >> y;
+	add_point(g, x, y);
+}
+void input_point_int(int g) {
+	int x, y; cin >> x >> y;
+	add_point(g, x, y);
+}
+
+jump normalize(jump a) {
+	jump b(a.X / a.len, a.Y / a.len);
+	return b;
+}
+ld vc(jump a, jump b) {
+	return a.X * b.Y - a.Y * b.X;
+}
+ld sc(jump a, jump b) {
+	return a.X * b.X + a.Y * b.Y;
+}
+
+jump rotate_counter_clockwise(jump j, ld angle) {
+	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
+}
+jump rotate_counter_clockwise(ld angle, jump j) { 
+	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
+}
+
+jump rotate_clockwise(jump j, ld angle) { 
+	angle = -angle;
+	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
+}
+jump rotate_clockwise(ld angle, jump j) { 
+	angle = -angle;
+	return jump(j.X * cos(angle) - j.Y * sin(angle), j.X * sin(angle) + j.Y * cos(angle));
+}
+
+ray bisector(int i, int i1, int i2) {
+	point p = Point[i];
+	point p1 = Point[i1];
+	point p2 = Point[i2];
+	jump j1(p, p1);
+	jump j2(p, p2);
+	j1 = normalize(j1);
+	j2 = normalize(j2);
+	p1 = p + j1;
+	p2 = p + j2;
+	point pmid((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+	return ray(p, pmid);
+}
+ray bisector(point p, point p1, point p2) {
+	jump j1(p, p1);
+	jump j2(p, p2);
+	j1 = normalize(j1);
+	j2 = normalize(j2);
+	p1 = p + j1;
+	p2 = p + j2;
+	point pmid((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+	return ray(p, pmid);
+}
+ray bisector(point p, jump j1, jump j2) {
+	j1 = normalize(j1);
+	j2 = normalize(j2);
+	point p1 = p + j1;
+	point p2 = p + j2;
+	point pmid((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+	return ray(p, p);
+}
+
+
+ld angle(jump a, jump b) { //may be piece of shit
+	ld big, small;
+	big = max(a.angle, b.angle);
+	small = min(a.angle, b.angle);
+	ld ans = min(big - small, small + 2 * pi - big);
+	if (ans < 0) ans = 0;
+	if (ans > 2 * pi) ans = 2 * pi;
+	return ans;
+}
+
+ld area(vector<int>& A) {
+	int n = A.size();
+	ld area = 0;
+	vector<jump> V;
+	for (int i = 1; i < n; ++i) {
+		V.push_back(jump(Point[A[0]], Point[A[i]]));
+	}
+	//auto cmp = [](const jump& a, const jump& b) { return a.angle < b.angle; };
+	//sort(all(V), cmp);
+	for (int i = 0; i < (int)V.size() - 1; ++i) {
+		area += vc(V[i], V[i + 1]);
+	}
+	return fabs(area) / 2;
+}
+
+ld area(point p1, point p2, point p3) {
+	vector<point> p = { p1, p2, p3 };
+	int n = p.size();
+	ld area = 0;
+	vector<jump> V;
+	for (int i = 1; i < n; ++i) {
+		V.push_back(jump(p[0], p[i]));
+	}
+	//auto cmp = [](const jump& a, const jump& b) { return a.angle < b.angle; };
+	//sort(all(V), cmp);
+	for (int i = 0; i < (int)V.size() - 1; ++i) {
+		area += vc(V[i], V[i + 1]);
+	}
+	return fabs(area) / 2;
+}
+
+ld area(point p1, point p2, point p3, point p4) {
+	vector<point> p = { p1, p2, p3, p4 };
+	int n = p.size();
+	ld area = 0;
+	vector<jump> V;
+	for (int i = 1; i < n; ++i) {
+		V.push_back(jump(p[0], p[i]));
+	}
+	//auto cmp = [](const jump& a, const jump& b) { return a.angle < b.angle; };
+	//sort(all(V), cmp);
+	for (int i = 0; i < (int)V.size() - 1; ++i) {
+		area += vc(V[i], V[i + 1]);
+	}
+	return fabs(area) / 2;
+}
+
+
+bool intersect(point p1, point p2) {
+	if (equal(p1.x, p2.x) && equal(p1.y, p2.y)) return 1;
+	else return 0;
+}
+
+bool intersect(line l1, line l2) {
+	if (equal(l1.a, l2.a) && equal(l1.b, l2.b)) {
+		conflux = CONFLUX(1);
+		return 1;
+	}
+	ld y = (l2.c * l1.a - l2.a * l1.c) / (l2.a * l1.b - l1.a * l2.b);
+	ld x = (l1.b * l2.c - l2.b * l1.c) / (l2.b * l1.a - l2.a * l1.b);
+	conflux = CONFLUX(point(x, y));
+	return 1;
+}
+
+bool intersect(point p, line l) {
+	if (equal(l.a * p.x + l.b * p.y + l.c, 0)) return 1;
+	else return 0;
+}
+
+bool intersect(line l, point p) {
+	if (equal(l.a * p.x + l.b * p.y + l.c, 0)) return 1;
+	else return 0;
+}
+
+bool intersect(ray r, point p) {
+	if (intersect(p, r.l) == 0) return 0;
+	jump j(r.p, p);
+	return !less(sc(r.j, j), 0);
+}
+bool intersect(point p, ray r) {
+	if (intersect(p, r.l) == 0) return 0;
+	jump j(r.p, p);
+	return !less(sc(r.j, j), 0);
+}
+
+bool intersect(point p, segment s) {
+	if (intersect(p, s.l) == 0) return 0;
+	jump j(s.p1, s.p2);
+	ld lx = min(s.p1.x, s.p2.x);
+	ld rx = max(s.p1.x, s.p2.x);
+	ld mx = p.x;
+
+	ld ly = min(s.p1.y, s.p2.y);
+	ld ry = max(s.p1.y, s.p2.y);
+	ld my = p.y;
+
+	return !less(rx, mx) && !less(mx, lx) && !less(ry, my) && !less(my, ly);
+}
+bool intersect(segment s, point p) {
+	if (intersect(p, s.l) == 0) return 0;
+	jump j(s.p1, s.p2);
+	ld lx = min(s.p1.x, s.p2.x);
+	ld rx = max(s.p1.x, s.p2.x);
+	ld mx = p.x;
+
+	ld ly = min(s.p1.y, s.p2.y);
+	ld ry = max(s.p1.y, s.p2.y);
+	ld my = p.y;
+
+	return !less(rx, mx) && !less(mx, lx) && !less(ry, my) && !less(my, ly);
+}
+
+
+bool intersect(segment a, segment b) {
+	line LA(a.p1, a.p2);
+	line LB(b.p1, b.p2);
+
+	point minA(min(a.p1.x, a.p2.x), min(a.p1.y, a.p2.y));
+	point maxA(max(a.p1.x, a.p2.x), max(a.p1.y, a.p2.y));
+	point minB(min(b.p1.x, b.p2.x), min(b.p1.y, b.p2.y));
+	point maxB(max(b.p1.x, b.p2.x), max(b.p1.y, b.p2.y));
+
+	jump vec13(a.p1, b.p1);
+	jump vec12(a.p1, a.p2);
+	jump vec14(a.p1, b.p2);
+
+	jump vec31(b.p1, a.p1);
+	jump vec34(b.p1, b.p2);
+	jump vec32(b.p1, a.p2);
+	bool ans = ((lessorequal(minA.x, maxB.x) && lessorequal(minA.y, maxB.y) && lessorequal(minB.x, maxA.x) && lessorequal(minB.y, maxA.y)) && (lessorequal(vc(vec13, vec12) * vc(vec14, vec12), 0)) && (lessorequal(vc(vec31, vec34) * vc(vec32, vec34), 0)));
+	if (ans) intersect(a.l, b.l);
+	return ans;
+}
+
+/*
+point project(point p, line l) {
+	line l2(-l.b, l.a, l.b * p.x - l.a * p.y);
+	conflux c = intersect(l, l2);
+	return c.p[0];
+}
+point project(line l, point p) {
+	line l2(-l.b, l.a, l.b * p.x - l.a * p.y);
+	conflux c = intersect(l, l2);
+	return c.p[0];
+}
+*/
+
+ld distance(point p1, point p2) {
+	if (intersect(p1, p2) == 1) return 0;
+	return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+ld distance(point p, line l) {
+	if (intersect(l, p) == 1) return 0;
+	return (fabs(l.a * p.x + l.b * p.y + l.c) / sqrt(l.a * l.a + l.b * l.b));
+}
+ld distance(line l, point p) {
+	if (intersect(l, p) == 1) return 0;
+	return (fabs(l.a * p.x + l.b * p.y + l.c) / sqrt(l.a * l.a + l.b * l.b));
+}
+
+ld distance(ray r, point p) {
+	if (intersect(r, p) == 1) return 0;
+	jump j1(r.j);
+	jump j2(p, r.p);
+	if (less(angle(j1, j2), pi / 2))
+		return distance(p, r.p);
+	else return distance(p, r.l);
+}
+
+ld distance(point p, ray r) {
+	if (intersect(r, p) == 1) return 0;
+	jump j1(r.j);
+	jump j2(r.p, p);
+	if (less(angle(j1, j2), pi / 2))
+		return distance(p, r.l);
+	else return distance(p, r.p);
+}
+
+ld distance(point p, segment s) {
+	if (intersect(s, p) == 1) return 0;
+	jump j1(s.p1, s.p2);
+	jump j2(s.p1, p);
+	jump j3(s.p2, s.p1);
+	jump j4(s.p2, p);
+	if (less(angle(j1, j2), pi / 2) && less(angle(j3, j4), pi / 2))
+		return distance(p, s.l);
+	else return min(distance(p, s.p1), distance(p, s.p2));
+}
+ld distance(segment s, point p) {
+	if (intersect(s, p) == 1) return 0;
+	jump j1(s.p1, s.p2);
+	jump j2(s.p1, p);
+	jump j3(s.p2, s.p1);
+	jump j4(s.p2, p);
+	if (less(angle(j1, j2), pi / 2) && less(angle(j3, j4), pi / 2))
+		return distance(p, s.l);
+	else return min(distance(p, s.p1), distance(p, s.p2));
+}
+ld distance(segment s1, segment s2) {
+	if(intersect(s1, s2)) return 0;
+	return min({ distance(s1.p1, s2), distance(s1.p2, s2), distance(s2.p1, s1), distance(s2.p2, s1) });
+}
+
+
 int32_t main() {
 	boostIO();
-	//freopen("bisector.in", "r", stdin);
-	//freopen("bisector.out", "w", stdout);
-	Geometry G;
-	for (int i = 1; i <= 3; ++i) {	
-		G.input_point_int(i);
-	}
-	G.add_ray();
-	
+	//freopen("line2.in", "r", stdin);
+	//freopen("line2.out", "w", stdout);
+	//input_point(1);
+	//input_segment(1);
 
-	cout << G.area(A) << endl;
-	Return;
+
+
+	/*
+	input_point(1);
+	input_jump(1);
+	add_line(1, line(Point[1], isnormal(Jump[1])));
+	cout << Line[1].a << " " << Line[1].b << " " << Line[1].c << " " << endl;
+	*/
+	//cout << G.area(A) << endl;
+	//Return;
 }
